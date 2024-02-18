@@ -6,17 +6,11 @@ write by: lei.fu
 
 这个项目是在 Opensearch 3.0 进行的扩展。说白了，还是个 Opensearch，但是在 Opensearch 内部集成了Cassandra。
 
-Cassandra作为宽表存储，Elasticsearch存储着Cassandra的索引，每次查询的时候，都会到 Opensearch 进行索引操作，优化提升Cassandra的查询性能。
+Cassandra作为宽表存储，Opensearch 存储着Cassandra的索引，每次查询的时候，都会到 Opensearch 进行索引操作，优化提升Cassandra的查询性能。
 
+之后我们又在RatuDB里增加了Janusgraph。
 
-
-== RatuDB V2.0.0 版本
-
-1.这个版本新增了 janusgraph 的集成，程序启动后，会先启动Opensearch,然后启动Cassandra，最后会启动一个Janusgraph Server。
-
-2.gremlin作为janusgraph的官方console客户端工具，也集成在RatuDB2.0.0版本的安装内。
-
-3.新增了ratudb_server 启动脚本程序和 ratudb_client 客户端脚本程序。
+所以RatuDB在jvm进程里拥有了Opensearch、Cassandra和Janusgraph。当在使用的时候，还可以结合起来使用。
 
 
 == Getting Started
@@ -108,10 +102,8 @@ POST 索引名/_refresh
 
 并且，如果设置 `text` 也会对应创建子字段。
 
-以上都执行完成后，可以执行在es里看到索引已经创建了：
+以上都执行完成后，可以执行在Opensearch里看到索引已经创建了：
 
-
-image::docs/img/img.png[1]
 
 
 === 3.创建索引补充内容
@@ -227,11 +219,6 @@ INSERT INTO lei.tweets (id, user, body, time,latitude,longitude) VALUES (2, 'fu'
 INSERT INTO lei.tweets (id, user, body, time,latitude,longitude) VALUES (3, 'lei', '123456', '2019-05-15',41.12,-71.34);
 ----
 
-再看看数据:
-
-image::docs/img/img_1.png[2]
-
-正好三条数据。
 
 
 === 5.查询
@@ -431,7 +418,7 @@ Gradle 使用 `8.0.2` 版本，不建议升级 Gradle版本。
 拉取源代码，这样只是将RatuDB的代码拉取下来了，没有子项目Cassandra的代码。
 
 ----
-git clone ssh://git@gitlab.ratu.ltd:30022/operation-ratudb/ratudb-opensearch.git
+git clone https://github.com/Ratu-Tech/RatuDB.git
 ----
 
 项目里，Cassandra的源码作为项目的 `submodule` 所以拉取的时候需要递归拉取，可以执行下边的命令拉取代码：
@@ -449,9 +436,6 @@ git clone ssh://git@gitlab.ratu.ltd:30022/operation-ratudb/ratudb-opensearch.git
 如果配置了JDK11, 就可以运行RatuDB，就会拉取一下相关依赖的包，当然也可以直接在IDEA里边打开做同步。
 
 
-image::assets/image.png[3]
-
-看到画图的日志，是不是很熟悉，这就是Cassandra启动成功的日志。
 
 
 ===== 1. JDK
@@ -495,10 +479,6 @@ RUNTIME_JAVA_HOME 是ES 的运行时JDK，CASSANDRA_USE_JDK11是Cassandra的运�
 ./gradlew :distribution:archives:linux-tar:assemble
 ----
 
-linux 版本输出路径：
-
-
-image::docs/img/img_6.png[4]
 
 
 ====== 2.构建mac版本
@@ -506,9 +486,7 @@ image::docs/img/img_6.png[4]
 ----
 ./gradlew :distribution:archives:darwin-tar:assemble
 ----
-mac 版本输出路径：
 
-image::docs/img/img_5.png[5]
 
 ====== 3.构建windows版本
 
@@ -522,10 +500,6 @@ image::docs/img/img_5.png[5]
 ./gradlew localDistro
 ----
 
-这个是构建一个本地系统版本，用mac就是构建mac系统的版本。输出路径：
-
-
-image::docs/img/img_4.png[6]
 
 === 导入项目到 IntelliJ IDEA
 
@@ -681,8 +655,7 @@ rack=rack1
 ----
 
 `dc` 代表数据中心，`rack` 代表的是机架。
-这两个值，对应到ES就是自定义属性，配置好就是这个样子：
-image:docs/img/img_3.png[]
+这两个值，对应Opensearch就是自定义属性，配置好就是这个样子：
 
 这个值，预设过来，可以做冷热集群使用。
 
@@ -693,74 +666,6 @@ image:docs/img/img_3.png[]
 
 === 7.启动集群
 分别在三个节点启动服务,执行`./bin/ratudb_server`,如果想要用守护进程启动，可以加`-d`参数
-
-查看cassandra 集群状态：
-
-image::docs/img/img_7.png[]
-
-查看Opensearch集群状态：
-
-image::docs/img/img_8.png[]
-
-
-
-== 关于`[parent] Data too large` 异常
-
-Opensearch 本身的断路器，是避免内存使用过大，导致的系统崩溃的一种措施。[parent]父级断路器，是在JVM内存达到95%，产生的一种异常错误。
-
-虽然已经在内部进行了优化，但是大量数据还是存在内存进行交互，所以还是不能排除有放入内存中的数据大于本身JVM内存的情况，所以在使用异步同步数据的情况，在过大数据量的情况下，出现此错误的时候，最实在的方法还是建议增大内存。
-
-*查看内存分析：*
-----
-GET _cat/nodes?v=true&h=name,node*,heap*
-----
-此API可以分析，每个集群节点的内存使用情况。
-----
-GET _nodes/stats/breaker
-----
-可以查看断路器的内存使用情况。
-
-
-== 关于优化es的写入速度
-1、客户端线程数。
-es本身拥有一个queue，是一个FIFO的队列。客户端10线程写入和100线程写入性能差距是很大的。所以在感觉性能不够的时候。可以适当增加客户端线程提高速度。
-
-虽然数据是先写入Cassandra，但是Cassandra数据，先写入的commitLog，再加载到内存表，性能确实强悍。增加线程的同时完全不用担心Cassandra的性能。
-
-
-== 20万数据，单核CPU，2G内存。测试过程。
-1、不同步的情况：
-----
-[OVERALL], RunTime(ms), 29850
-[OVERALL], Throughput(ops/sec), 6700.167504187605
-[TOTAL_GCS_G1_Young_Generation], Count, 8
-[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 64
-[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 0.21440536013400338
-[TOTAL_GCS_G1_Old_Generation], Count, 0
-[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
-[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
-[TOTAL_GCs], Count, 8
-[TOTAL_GC_TIME], Time(ms), 64
-[TOTAL_GC_TIME_%], Time(%), 0.21440536013400338
-[CLEANUP], Operations, 600
-[CLEANUP], AverageLatency(us), 3706.52
-[CLEANUP], MinLatency(us), 0
-[CLEANUP], MaxLatency(us), 2224127
-[CLEANUP], 95thPercentileLatency(us), 3
-[CLEANUP], 99thPercentileLatency(us), 11
-[INSERT], Operations, 200000
-[INSERT], AverageLatency(us), 76934.70407
-[INSERT], MinLatency(us), 457
-[INSERT], MaxLatency(us), 756735
-[INSERT], 95thPercentileLatency(us), 238079
-[INSERT], 99thPercentileLatency(us), 394239
-[INSERT], Return=OK, 200000
-----
-
-2、同步情况
-----
-
-----
 
 
 
