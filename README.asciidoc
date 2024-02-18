@@ -8,7 +8,7 @@ Cassandra作为宽表存储，Opensearch 存储着Cassandra的索引，每次查
 
 之后我们又在RatuDB里增加了Janusgraph。
 
-所以RatuDB在jvm进程里拥有了Opensearch、Cassandra和Janusgraph。当在使用的时候，还可以结合起来使用。
+所以RatuDB在单个 jvm 进程里拥有了Opensearch、Cassandra和Janusgraph。而且在使用的时候，还可以结合起来使用。
 
 
 == Getting Started
