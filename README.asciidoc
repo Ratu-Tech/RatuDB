@@ -1,7 +1,5 @@
 = RatuDB
 
-write by: lei.fu
-
 === 这是什么?
 
 这个项目是在 Opensearch 3.0 进行的扩展。说白了，还是个 Opensearch，但是在 Opensearch 内部集成了Cassandra。
