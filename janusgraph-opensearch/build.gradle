@@ -1,0 +1,81 @@
+plugins {
+  id 'java'
+}
+
+group 'org.opensearch'
+version '1.0.2'
+
+
+dependencies {
+
+  implementation group: 'com.ratu.janusgraph', name: 'janusgraph-core', version: '1.0.0-SNAPSHOT', {
+    exclude group: 'org.slf4j', module: 'jcl-over-slf4j'
+    exclude group: 'org.apache.commons', module: 'commons-lang3'
+    exclude group: 'org.apache.groovy', module: 'groovy-groovysh'
+    exclude group: 'org.javassist', module: 'javassist'
+    exclude group: 'org.antlr', module: 'antlr4-runtime'
+    exclude group: 'commons-logging', module: 'commons-logging'
+    exclude group: 'io.dropwizard.metrics', module: 'metrics-core'
+    exclude group: 'com.carrotsearch', module: 'hppc'
+    exclude group: 'com.github.ben-manes.caffeine', module: 'caffeine'
+    exclude group: 'org.slf4j', module: 'slf4j-api'
+    exclude group: 'com.google.guava', module: 'guava'
+    exclude group: 'org.locationtech.jts', module: 'jts-core'
+    exclude group: 'org.apache.groovy', module: 'groovy-jsr223'
+    exclude group: 'io.netty', module: 'netty-all'
+    exclude group: 'org.apache.groovy', module: 'groovy-bom'
+    exclude group: 'org.apache.groovy', module: 'groovy'
+    exclude group: 'org.apache.groovy', module: 'groovy-cli-picocli'
+    exclude group: 'org.apache.groovy', module: 'groovy-json'
+  }
+
+  implementation group: 'com.ratu.janusgraph', name: 'janusgraph-driver', version: '1.0.0-SNAPSHOT', {
+    exclude group: 'org.apache.commons', module: 'commons-lang3'
+    exclude group: 'com.carrotsearch', module: 'hppc'
+    exclude group: 'com.github.ben-manes.caffeine', module: 'caffeine'
+    exclude group: 'org.apache.groovy', module: 'groovy-groovysh'
+    exclude group: 'com.google.guava', module: 'guava'
+    exclude group: 'org.locationtech.jts', module: 'jts-core'
+    exclude group: 'org.slf4j', module: 'slf4j-api'
+    exclude group: 'io.netty', module: 'netty-all'
+    exclude group: 'org.checkerframework', module: 'checker-qual'
+    exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
+    exclude group: 'org.apache.groovy', module: 'groovy-bom'
+    exclude group: 'org.apache.groovy', module: 'groovy-jsr223'
+    exclude group: 'org.antlr', module: 'antlr4-runtime'
+    exclude group: 'org.apache.groovy', module: 'groovy'
+    exclude group: 'commons-io', module: 'commons-io'
+  }
+
+  implementation group: 'com.ratu.janusgraph', name: 'janusgraph-mixed-index-utils', version: '1.0.0-SNAPSHOT', {
+    exclude group: 'org.apache.lucene', module: 'lucene-core'
+    exclude group: 'org.slf4j', module: 'slf4j-api'
+  }
+
+  implementation group: 'org.apache.tinkerpop', name: 'gremlin-shaded', version: '3.7.0'
+  implementation group: 'org.locationtech.spatial4j', name: 'spatial4j', version: '0.7'
+  implementation group: 'com.google.guava', name: 'guava', version: '31.1-jre', {
+    exclude group: 'org.mockito', module: 'mockito-core'
+    exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
+    exclude group: 'com.google.code.findbugs', module: 'jsr305'
+    exclude group: 'org.codehaus.mojo', module: 'animal-sniffer-annotations'
+    exclude group: 'com.google.guava', module: 'listenablefuture'
+    exclude group: 'com.google.guava', module: 'failureaccess'
+    exclude group: 'org.checkerframework', module: 'checker-qual'
+    exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
+  }
+
+  implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.13.0'
+  implementation('org.apache.tinkerpop:gremlin-core:3.7.0') {
+    exclude group: 'org.apache.commons', module: 'commons-lang3'
+    exclude group: 'com.carrotsearch', module: 'hppc'
+    exclude group: 'org.antlr', module: 'antlr4-runtime'
+    exclude group: 'org.slf4j', module: 'slf4j-api'
+    exclude group: 'org.slf4j', module: 'jcl-over-slf4j'
+    exclude group: 'org.yaml', module: 'snakeyaml'
+  }
+
+  implementation project(":client:rest")
+
+}
+

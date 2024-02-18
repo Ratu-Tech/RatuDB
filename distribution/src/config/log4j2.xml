@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Licensed to Elasticsearch under one or more contributor
+  ~ license agreements. See the NOTICE file distributed with
+  ~ this work for additional information regarding copyright
+  ~ ownership. Elasticsearch licenses this file to you under
+  ~ the Apache License, Version 2.0 (the "License"); you may
+  ~ not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+  -->
+
+<Configuration status="WARN">
+    <Properties>
+        <property name="log_level" value="info" />
+        <Property name="log_dir" value="log" />
+        <property name="log_pattern"
+                  value="[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%p] - [%t] %logger - %m%n" />
+        <property name="file_name" value="RatuDB-Gremlin" />
+        <property name="every_file_size" value="100 MB" />
+    </Properties>
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${log_pattern}" />
+        </Console>
+        <RollingFile name="RollingFile"
+                     filename="../logs/${file_name}.log"
+                     filepattern="../logs/$${date:yyyy-MM}/${file_name}-%d{yyyy-MM-dd}-%i.log">
+            <ThresholdFilter level="DEBUG" onMatch="ACCEPT"
+                             onMismatch="DENY" />
+            <PatternLayout pattern="${log_pattern}" />
+            <Policies>
+                <SizeBasedTriggeringPolicy
+                    size="${every_file_size}" />
+                <TimeBasedTriggeringPolicy modulate="true"
+                                           interval="1" />
+            </Policies>
+            <DefaultRolloverStrategy max="20" />
+        </RollingFile>
+
+        <RollingFile name="RollingFileErr"
+                     fileName="../logs/${file_name}-warnerr.log"
+                     filePattern="../logs/$${date:yyyy-MM}/${file_name}-%d{yyyy-MM-dd}-warnerr-%i.log">
+            <ThresholdFilter level="WARN" onMatch="ACCEPT"
+                             onMismatch="DENY" />
+            <PatternLayout pattern="${log_pattern}" />
+            <Policies>
+                <SizeBasedTriggeringPolicy
+                    size="${every_file_size}" />
+                <TimeBasedTriggeringPolicy modulate="true"
+                                           interval="1" />
+            </Policies>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <Root level="${log_level}">
+            <AppenderRef ref="Console" />
+            <AppenderRef ref="RollingFile" />
+            <appender-ref ref="RollingFileErr" />
+        </Root>
+    </Loggers>
+</Configuration>

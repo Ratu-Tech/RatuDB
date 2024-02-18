@@ -1,0 +1,113 @@
+## JVM configuration
+
+################################################################
+## IMPORTANT: JVM heap size
+################################################################
+##
+## You should always set the min and max JVM heap
+## size to the same value. For example, to set
+## the heap to 4 GB, set:
+##
+## -Xms4g
+## -Xmx4g
+##
+## See https://opensearch.org/docs/opensearch/install/important-settings/
+## for more information
+##
+################################################################
+
+# Xms represents the initial size of total heap space
+# Xmx represents the maximum size of total heap space
+
+-Xms${heap.min}
+-Xmx${heap.max}
+
+-XX:+ExitOnOutOfMemoryError
+
+################################################################
+## Expert settings
+################################################################
+##
+## All settings below this section are considered
+## expert settings. Don't tamper with them unless
+## you understand what you are doing
+##
+################################################################
+
+## GC configuration
+8-10:-XX:+UseConcMarkSweepGC
+8-10:-XX:CMSInitiatingOccupancyFraction=75
+8-10:-XX:+UseCMSInitiatingOccupancyOnly
+
+## G1GC Configuration
+# NOTE: G1 GC is only supported on JDK version 10 or later
+# to use G1GC, uncomment the next two lines and update the version on the
+# following three lines to your version of the JDK
+# 10:-XX:-UseConcMarkSweepGC
+# 10:-XX:-UseCMSInitiatingOccupancyOnly
+11-:-XX:+UseG1GC
+11-:-XX:G1ReservePercent=25
+11-:-XX:InitiatingHeapOccupancyPercent=30
+
+
+-Djdk.attach.allowAttachSelf=true
+--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED
+--add-exports=java.base/jdk.internal.ref=ALL-UNNAMED
+--add-exports=java.base/sun.nio.ch=ALL-UNNAMED
+--add-exports=java.management.rmi/com.sun.jmx.remote.internal.rmi=ALL-UNNAMED
+--add-exports=java.rmi/sun.rmi.registry=ALL-UNNAMED
+--add-exports=java.rmi/sun.rmi.server=ALL-UNNAMED
+--add-exports=java.sql/java.sql=ALL-UNNAMED
+--add-opens=java.base/java.lang.module=ALL-UNNAMED
+--add-opens=java.base/jdk.internal.loader=ALL-UNNAMED
+--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED
+--add-opens=java.base/jdk.internal.reflect=ALL-UNNAMED
+--add-opens=java.base/jdk.internal.math=ALL-UNNAMED
+--add-opens=java.base/jdk.internal.module=ALL-UNNAMED
+--add-opens=java.base/jdk.internal.util.jar=ALL-UNNAMED
+--add-opens=jdk.management/com.sun.management.internal=ALL-UNNAMED
+
+## JVM temporary directory
+-Djava.io.tmpdir=${OPENSEARCH_TMPDIR}
+
+
+## JVM 远程监测配置，如果需要自行打开。默认使用7199，跟nodetool工具使用端口一样，不建议修改端口。
+#-Djava.rmi.server.hostname=127.0.0.1
+#-Dcom.sun.management.jmxremote=true
+#-Dcom.sun.management.jmxremote.port=7199
+#-Dcom.sun.management.jmxremote.authenticate=false
+#-Dcom.sun.management.jmxremote.ssl=false
+
+
+## 节点异常后，重启会会出现：节点IP:7000 已存在的问题，需要打包这两个配置，再根据情况调整。
+#-Dcassandra.allow_unsafe_replace=true
+#-Dcassandra.replace_address=<IP>
+
+## heap dumps
+
+# generate a heap dump when an allocation from the Java heap fails
+# heap dumps are created in the working directory of the JVM
+-XX:+HeapDumpOnOutOfMemoryError
+
+# specify an alternative path for heap dumps; ensure the directory exists and
+# has sufficient space
+${heap.dump.path}
+
+# specify an alternative path for JVM fatal error logs
+${error.file}
+
+## JDK 8 GC logging
+8:-XX:+PrintGCDetails
+8:-XX:+PrintGCDateStamps
+8:-XX:+PrintTenuringDistribution
+8:-XX:+PrintGCApplicationStoppedTime
+8:-Xloggc:${loggc}
+8:-XX:+UseGCLogFileRotation
+8:-XX:NumberOfGCLogFiles=32
+8:-XX:GCLogFileSize=64m
+
+# JDK 9+ GC logging
+9-:-Xlog:gc*,gc+age=trace,safepoint:file=${loggc}:utctime,pid,tags:filecount=32,filesize=64m
+
+# Explicitly allow security manager (https://bugs.openjdk.java.net/browse/JDK-8270380)
+18-:-Djava.security.manager=allow

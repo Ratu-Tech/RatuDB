@@ -1,0 +1,581 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * The OpenSearch Contributors require contributions made to
+ * this file be licensed under the Apache-2.0 license or a
+ * compatible open source license.
+ *
+ * Modifications Copyright OpenSearch Contributors. See
+ * GitHub history for details.
+ */
+
+/*
+ * Licensed to Elasticsearch under one or more contributor
+ * license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright
+ * ownership. Elasticsearch licenses this file to you under
+ * the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+import org.opensearch.gradle.info.BuildParams
+
+plugins {
+  id('com.google.protobuf') version 'latest.release'
+  id('opensearch.build')
+  id('opensearch.publish')
+  id('opensearch.internal-cluster-test')
+  id('opensearch.optional-dependencies')
+}
+
+publishing {
+  publications {
+    nebula(MavenPublication) {
+      artifactId 'opensearch'
+    }
+  }
+}
+
+base {
+  archivesBaseName = 'RatuDB'
+}
+
+sourceSets {
+  main {
+    java {
+      srcDir "${buildDir}/generated/source/proto/main/java"
+    }
+  }
+}
+// we want to keep the JDKs in our IDEs set to JDK 8 until minimum JDK is bumped to 11 so we do not include this source set in our IDEs
+if (!isEclipse) {
+  sourceSets {
+    java11 {
+      java {
+        srcDirs = ['src/main/java11']
+      }
+    }
+  }
+
+  configurations {
+    java11Implementation.extendsFrom(api)
+  }
+
+  dependencies {
+    java11Implementation sourceSets.main.output
+  }
+
+  compileJava11Java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+  }
+
+  tasks.named('forbiddenApisJava11').configure {
+    doFirst {
+      if (BuildParams.runtimeJavaVersion < JavaVersion.VERSION_11) {
+        targetCompatibility = JavaVersion.VERSION_11
+      }
+    }
+  }
+
+  jar {
+    metaInf {
+      into 'versions/11'
+      from sourceSets.java11.output
+    }
+    manifest.attributes('Multi-Release': 'true')
+  }
+}
+
+dependencies {
+
+  api project(':libs:opensearch-common')
+  api project(':libs:opensearch-core')
+  api project(":libs:opensearch-compress")
+  api project(':libs:opensearch-secure-sm')
+  api project(':libs:opensearch-x-content')
+  api project(":libs:opensearch-geo")
+  api project(":libs:opensearch-telemetry")
+  api project(":client:rest")
+
+
+  compileOnly project(':libs:opensearch-plugin-classloader')
+  testRuntimeOnly project(':libs:opensearch-plugin-classloader')
+
+  // CASSANDRA
+  implementation(files('cassandra/build/apache-cassandra-5.0-SNAPSHOT.jar'))
+  implementation group: 'com.google.guava', name: 'guava', version: "${versions.guava}", {
+    exclude group: 'org.mockito', module: 'mockito-core'
+    exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
+    exclude group: 'com.google.code.findbugs', module: 'jsr305'
+    exclude group: 'org.codehaus.mojo', module: 'animal-sniffer-annotations'
+    exclude group: 'com.google.guava', module: 'listenablefuture'
+    exclude group: 'com.google.guava', module: 'failureaccess'
+    exclude group: 'org.checkerframework', module: 'checker-qual'
+    exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
+  }
+  implementation 'org.mindrot:jbcrypt:0.4'
+  implementation 'org.xerial.snappy:snappy-java:1.1.10.2'
+  implementation 'com.google.errorprone:error_prone_annotations:2.18.0'
+  implementation 'com.github.stephenc.high-scale-lib:high-scale-lib:1.1.4'
+  implementation 'com.github.jbellis:jamm:0.3.2'
+  implementation 'org.lz4:lz4-java:1.8.0'
+  implementation "com.github.luben:zstd-jni:${versions.zstd}"
+  implementation 'com.googlecode.json-simple:json-simple:1.1'
+  implementation 'org.antlr:antlr-runtime:3.5.2'
+  implementation 'javax.inject:javax.inject:1'
+  implementation 'com.clearspring.analytics:stream:2.5.2'
+  implementation 'com.github.ben-manes.caffeine:caffeine:2.9.2'
+
+  //nodetool
+  implementation group: 'org.gridkit.jvmtool', name: 'sjk-cli', version: '0.14'
+  implementation group: 'io.airlift', name: 'airline', version: '0.8'
+
+  //sstable
+  implementation group: 'com.datastax.cassandra', name: 'cassandra-driver-core', version: '3.11.5'
+  implementation group: 'commons-cli', name: 'commons-cli', version: '1.5.0'
+  implementation group: 'com.google.guava', name: 'failureaccess', version: '1.0.1'
+
+  //janusgraph
+  implementation group: 'com.ratu.janusgraph', name: 'janusgraph-server', version: '1.0.0-SNAPSHOT'
+  implementation 'com.jcabi:jcabi-log:0.23.0'
+
+  implementation group: 'io.grpc', name: 'grpc-api', version: '1.57.2'
+  implementation group: 'io.grpc', name: 'grpc-stub', version: '1.57.2'
+  implementation group: 'org.apache.tinkerpop', name: 'gremlin-server', version: '3.7.0'
+  implementation 'io.dropwizard.metrics:metrics-core:4.2.21'
+
+  implementation group: 'com.ratu.janusgraph', name: 'janusgraph-core', version: '1.0.0-SNAPSHOT', {
+    exclude group: 'org.apache.commons', module: 'commons-lang3'
+    exclude group: 'org.apache.groovy', module: 'groovy-groovysh'
+    exclude group: 'org.javassist', module: 'javassist'
+    exclude group: 'org.antlr', module: 'antlr4-runtime'
+    exclude group: 'commons-logging', module: 'commons-logging'
+    exclude group: 'io.dropwizard.metrics', module: 'metrics-core'
+    exclude group: 'com.carrotsearch', module: 'hppc'
+    exclude group: 'com.github.ben-manes.caffeine', module: 'caffeine'
+    exclude group: 'org.slf4j', module: 'slf4j-api'
+    exclude group: 'com.google.guava', module: 'guava'
+    exclude group: 'org.locationtech.jts', module: 'jts-core'
+    exclude group: 'org.apache.groovy', module: 'groovy-jsr223'
+    exclude group: 'io.netty', module: 'netty-all'
+    exclude group: 'org.apache.groovy', module: 'groovy-bom'
+    exclude group: 'org.apache.groovy', module: 'groovy'
+    exclude group: 'org.apache.groovy', module: 'groovy-cli-picocli'
+    exclude group: 'org.apache.groovy', module: 'groovy-json'
+  }
+
+
+  implementation group: 'com.ratu.janusgraph', name: 'janusgraph-driver', version: '1.0.0-SNAPSHOT', {
+    exclude group: 'org.apache.commons', module: 'commons-lang3'
+    exclude group: 'com.carrotsearch', module: 'hppc'
+    exclude group: 'com.github.ben-manes.caffeine', module: 'caffeine'
+    exclude group: 'org.apache.groovy', module: 'groovy-groovysh'
+    exclude group: 'com.google.guava', module: 'guava'
+    exclude group: 'org.locationtech.jts', module: 'jts-core'
+    exclude group: 'org.slf4j', module: 'slf4j-api'
+    exclude group: 'io.netty', module: 'netty-all'
+    exclude group: 'org.checkerframework', module: 'checker-qual'
+    exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
+    exclude group: 'org.apache.groovy', module: 'groovy-bom'
+    exclude group: 'org.apache.groovy', module: 'groovy-jsr223'
+    exclude group: 'org.antlr', module: 'antlr4-runtime'
+    exclude group: 'org.apache.groovy', module: 'groovy'
+  }
+
+
+  implementation group: 'com.ratu.janusgraph', name: 'janusgraph-mixed-index-utils', version: '1.0.0-SNAPSHOT', {
+    exclude group: 'org.apache.lucene', module: 'lucene-core'
+    exclude group: 'org.slf4j', module: 'slf4j-api'
+  }
+  implementation group: 'com.ratu.janusgraph', name: 'janusgraph-hadoop', version: '1.0.0-SNAPSHOT'
+
+  implementation group: 'com.ratu.janusgraph', name: 'janusgraph-grpc', version: '1.0.0-SNAPSHOT'
+  implementation group: 'com.ratu.janusgraph', name: 'janusgraph-cql', version: '1.0.0-SNAPSHOT'
+  implementation group: 'org.apache.tinkerpop', name: 'gremlin-util', version: '3.7.0'
+  implementation group: 'org.apache.tinkerpop', name: 'gremlin-groovy', version: '3.7.0'
+  implementation group: 'org.apache.tinkerpop', name: 'tinkergraph-gremlin', version: '3.7.0'
+
+  implementation group: 'io.dropwizard.metrics', name: 'metrics-jmx', version: '4.2.19'
+  implementation group: 'org.apache.groovy', name: 'groovy-jsr223', version: '4.0.13'
+  implementation group: 'org.jctools', name: 'jctools-core', version: '4.0.1'
+  implementation group: 'com.jcabi', name: 'jcabi-manifests', version: '2.1.0'
+
+  api project(":janusgraph-opensearch"), {
+    exclude group: 'com.ratu.janusgraph', module: 'janusgraph-core'
+    exclude group: 'com.ratu.janusgraph', module: 'janusgraph-driver'
+    exclude group: 'com.ratu.janusgraph', module: 'janusgraph-mixed-index-utils'
+    exclude group: 'com.google.guava', module: 'guava'
+  }
+
+  // gremlin-console
+  implementation 'org.apache.tinkerpop:gremlin-console:3.7.0'
+  implementation 'org.apache.tinkerpop:gremlin-driver:3.7.0'
+  implementation 'commons-io:commons-io:2.15.0'
+  implementation 'com.datastax.oss:java-driver-core:4.17.0'
+  implementation 'com.typesafe:config:1.4.3'
+  implementation 'com.datastax.oss:java-driver-shaded-guava:25.1-jre'
+  implementation 'com.datastax.oss:native-protocol:1.5.1'
+  implementation 'com.github.jnr:jnr-posix:3.1.18'
+  implementation 'org.apache.groovy:groovy-groovysh:4.0.15'
+  implementation 'org.apache.groovy:groovy-cli-picocli:4.0.9'
+  implementation 'info.picocli:picocli:4.7.0'
+  implementation 'jline:jline:2.14.6'
+  implementation 'org.apache.groovy:groovy:4.0.9'
+  implementation 'net.oneandone.reflections8:reflections8:0.11.7'
+  implementation 'org.javassist:javassist:3.29.2-GA'
+  implementation 'io.grpc:grpc-protobuf:1.57.2'
+  implementation 'org.apache.hadoop:hadoop-mapreduce-client-core:3.3.5'
+  implementation 'org.apache.tinkerpop:hadoop-gremlin:3.7.0'
+  implementation 'org.apache.hbase:hbase-shaded-client:2.5.3'
+  implementation 'org.apache.hadoop:hadoop-hdfs-client:3.3.5'
+  implementation 'org.antlr:antlr4-runtime:4.11.1'
+  implementation 'org.apache.spark:spark-core_2.13:3.3.2'
+  implementation 'com.esotericsoftware:kryo-shaded:4.0.3'
+  implementation 'io.vavr:vavr:0.10.4'
+  implementation 'com.datastax.oss:java-driver-query-builder:4.17.0'
+  implementation 'commons-lang:commons-lang:2.6'
+
+
+  api 'com.alibaba.fastjson2:fastjson2:2.0.35'
+  api "org.slf4j:slf4j-api:${versions.slf4j}"
+  api "org.slf4j:log4j-over-slf4j:${versions.slf4j}"
+  api "org.apache.logging.log4j:log4j-slf4j-impl:${versions.log4j}"
+
+  api "com.fasterxml.jackson.core:jackson-databind:${versions.jackson}"
+  api "com.fasterxml.jackson.core:jackson-core:${versions.jackson}"
+  api "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${versions.jackson}"
+  api "com.fasterxml.jackson.core:jackson-annotations:${versions.jackson}"
+  api 'com.google.code.findbugs:jsr305:3.0.2'
+
+  api "io.netty:netty-handler:${versions.netty}"
+  api "io.netty:netty-buffer:${versions.netty}"
+  api "io.netty:netty-common:${versions.netty}"
+  api "io.netty:netty-transport:${versions.netty}"
+  api "io.netty:netty-transport-classes-epoll:${versions.netty}"
+  api "io.netty:netty-codec:${versions.netty}"
+  api "io.netty:netty-codec-http:${versions.netty}"
+  api "io.netty:netty-resolver:${versions.netty}"
+
+  api "io.netty:netty-transport-native-unix-common:${versions.netty}"
+  // Linux 需要指定linux 的 so，所以增加 <classifier>linux-x86_64</classifier>。
+  api "io.netty:netty-transport-native-epoll:${versions.netty}:linux-x86_64"
+  //api 'io.netty:netty-tcnative-boringssl-static:2.0.36.Final'
+
+  api 'com.google.code.gson:gson:2.10.1'
+
+  api 'org.apache.commons:commons-lang3:3.13.0'
+  api 'org.apache.commons:commons-math3:3.6.1'
+  api 'net.openhft:chronicle-core:2.20.126'
+  api 'org.fusesource:sigar:1.6.4'
+
+  implementation 'ch.qos.logback:logback-core:1.4.9'
+
+  // lucene
+  api "org.apache.lucene:lucene-core:${versions.lucene}"
+  api "org.apache.lucene:lucene-analysis-common:${versions.lucene}"
+  api "org.apache.lucene:lucene-backward-codecs:${versions.lucene}"
+  api "org.apache.lucene:lucene-grouping:${versions.lucene}"
+  api "org.apache.lucene:lucene-highlighter:${versions.lucene}"
+  api "org.apache.lucene:lucene-join:${versions.lucene}"
+  api "org.apache.lucene:lucene-memory:${versions.lucene}"
+  api "org.apache.lucene:lucene-misc:${versions.lucene}"
+  api "org.apache.lucene:lucene-queries:${versions.lucene}"
+  api "org.apache.lucene:lucene-queryparser:${versions.lucene}"
+  api "org.apache.lucene:lucene-sandbox:${versions.lucene}"
+  api "org.apache.lucene:lucene-spatial-extras:${versions.lucene}"
+  api "org.apache.lucene:lucene-spatial3d:${versions.lucene}"
+  api "org.apache.lucene:lucene-suggest:${versions.lucene}"
+
+  // utilities
+  api project(":libs:opensearch-cli")
+  api 'com.carrotsearch:hppc:0.8.1'
+
+  // time handling, remove with java 8 time
+  api "joda-time:joda-time:${versions.joda}"
+
+  // percentiles aggregation
+  api 'com.tdunning:t-digest:3.3'
+  // precentil ranks aggregation
+  api 'org.hdrhistogram:HdrHistogram:2.1.12'
+
+  // lucene spatial
+  api "org.locationtech.spatial4j:spatial4j:${versions.spatial4j}", optional
+  api "org.locationtech.jts:jts-core:${versions.jts}", optional
+
+  // logging
+  api "org.apache.logging.log4j:log4j-api:${versions.log4j}"
+  api "org.apache.logging.log4j:log4j-jul:${versions.log4j}"
+  api "org.apache.logging.log4j:log4j-core:${versions.log4j}", optional
+  annotationProcessor "org.apache.logging.log4j:log4j-core:${versions.log4j}"
+
+  // jna
+  api "net.java.dev.jna:jna:${versions.jna}"
+
+  // jcraft
+  api "com.jcraft:jzlib:${versions.jzlib}"
+
+  // protobuf
+  api "com.google.protobuf:protobuf-java:${versions.protobuf}"
+  api "jakarta.annotation:jakarta.annotation-api:${versions.jakarta_annotation}"
+
+  testImplementation(project(":test:framework")) {
+    // tests use the locally compiled version of server
+    exclude group: 'org.opensearch', module: 'server'
+  }
+  internalClusterTestImplementation(project(":test:framework")) {
+    exclude group: 'org.opensearch', module: 'server'
+  }
+}
+
+tasks.withType(JavaCompile).configureEach {
+  options.compilerArgs -= '-Xlint:cast'
+  options.compilerArgs -= '-Xlint:rawtypes'
+  options.compilerArgs -= '-Xlint:unchecked'
+}
+
+compileJava {
+  options.compilerArgs += ['-processor', 'org.apache.logging.log4j.core.config.plugins.processor.PluginProcessor']
+}
+
+tasks.named("internalClusterTest").configure {
+  // TODO: these run faster with C2 only because they run for so, so long
+  jvmArgs -= '-XX:TieredStopAtLevel=1'
+}
+
+tasks.named("forbiddenPatterns").configure {
+  dependsOn("generateProto")
+  exclude '**/*.json'
+  exclude '**/*.jmx'
+  exclude '**/*.dic'
+  exclude '**/*.binary'
+  exclude '**/*.st'
+  exclude '**/*.meta'
+}
+
+tasks.named("testingConventions").configure {
+  naming.clear()
+  naming {
+    Tests {
+      baseClass "org.apache.lucene.tests.util.LuceneTestCase"
+    }
+    IT {
+      baseClass "org.opensearch.test.OpenSearchIntegTestCase"
+      baseClass "org.opensearch.test.OpenSearchSingleNodeTestCase"
+    }
+  }
+}
+
+def generateModulesList = tasks.register("generateModulesList") {
+  List<String> modules = project(':modules').subprojects.collect { it.name }
+  File modulesFile = new File(buildDir, 'generated-resources/modules.txt')
+  processResources.from(modulesFile)
+  inputs.property('modules', modules)
+  outputs.file(modulesFile)
+  doLast {
+    modulesFile.parentFile.mkdirs()
+    modulesFile.setText(modules.join('\n'), 'UTF-8')
+  }
+}
+
+def generatePluginsList = tasks.register("generatePluginsList") {
+  Set<String> plugins = new TreeSet<>(project(':plugins').childProjects.keySet())
+  plugins.remove('example')
+
+  File pluginsFile = new File(buildDir, 'generated-resources/plugins.txt')
+  processResources.from(pluginsFile)
+  inputs.property('plugins', plugins)
+  outputs.file(pluginsFile)
+  doLast {
+    pluginsFile.parentFile.mkdirs()
+    pluginsFile.setText(plugins.join('\n'), 'UTF-8')
+  }
+}
+
+protobuf {
+  protoc {
+    artifact = "com.google.protobuf:protoc:${versions.protobuf}"
+  }
+
+  generateProtoTasks {
+    all().each { task ->
+      task.builtins {
+        java {
+          option "annotate_code"
+        }
+      }
+    }
+  }
+}
+
+tasks.named("processResources").configure {
+  dependsOn generateModulesList, generatePluginsList
+}
+
+tasks.named("thirdPartyAudit").configure {
+  ignoreMissingClasses(
+    *[
+      // from com.fasterxml.jackson.dataformat.yaml.YAMLMapper (jackson-dataformat-yaml)
+      'com.fasterxml.jackson.databind.ObjectMapper',
+
+      // from log4j
+      'com.conversantmedia.util.concurrent.SpinPolicy',
+      'com.fasterxml.jackson.annotation.JsonInclude$Include',
+      'com.fasterxml.jackson.databind.DeserializationContext',
+      'com.fasterxml.jackson.databind.DeserializationFeature',
+      'com.fasterxml.jackson.databind.JsonMappingException',
+      'com.fasterxml.jackson.databind.JsonNode',
+      'com.fasterxml.jackson.databind.Module$SetupContext',
+      'com.fasterxml.jackson.databind.ObjectReader',
+      'com.fasterxml.jackson.databind.ObjectWriter',
+      'com.fasterxml.jackson.databind.SerializerProvider',
+      'com.fasterxml.jackson.databind.deser.std.StdDeserializer',
+      'com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer',
+      'com.fasterxml.jackson.databind.module.SimpleModule',
+      'com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter',
+      'com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider',
+      'com.fasterxml.jackson.databind.ser.std.StdScalarSerializer',
+      'com.fasterxml.jackson.databind.ser.std.StdSerializer',
+      'com.fasterxml.jackson.dataformat.xml.JacksonXmlModule',
+      'com.fasterxml.jackson.dataformat.xml.XmlMapper',
+      'com.fasterxml.jackson.dataformat.xml.util.DefaultXmlPrettyPrinter',
+      'com.fasterxml.jackson.databind.node.ObjectNode',
+      'org.fusesource.jansi.Ansi',
+      'org.fusesource.jansi.AnsiRenderer$Code',
+      'com.lmax.disruptor.EventFactory',
+      'com.lmax.disruptor.EventTranslator',
+      'com.lmax.disruptor.EventTranslatorTwoArg',
+      'com.lmax.disruptor.EventTranslatorVararg',
+      'com.lmax.disruptor.ExceptionHandler',
+      'com.lmax.disruptor.LifecycleAware',
+      'com.lmax.disruptor.RingBuffer',
+      'com.lmax.disruptor.Sequence',
+      'com.lmax.disruptor.SequenceReportingEventHandler',
+      'com.lmax.disruptor.WaitStrategy',
+      'com.lmax.disruptor.dsl.Disruptor',
+      'com.lmax.disruptor.dsl.ProducerType',
+      'javax.jms.Connection',
+      'javax.jms.ConnectionFactory',
+      'javax.jms.Destination',
+      'javax.jms.JMSException',
+      'javax.jms.MapMessage',
+      'javax.jms.Message',
+      'javax.jms.MessageConsumer',
+      'javax.jms.MessageProducer',
+      'javax.jms.Session',
+      'javax.mail.Authenticator',
+      'javax.mail.Message$RecipientType',
+      'javax.mail.PasswordAuthentication',
+      'javax.mail.Session',
+      'javax.mail.Transport',
+      'javax.mail.internet.InternetAddress',
+      'javax.mail.internet.InternetHeaders',
+      'javax.mail.internet.MimeMessage',
+      'javax.mail.internet.MimeMultipart',
+      'javax.mail.internet.MimeUtility',
+      'org.apache.commons.compress.compressors.CompressorStreamFactory',
+      'org.apache.commons.compress.utils.IOUtils',
+      'org.apache.commons.csv.CSVFormat',
+      'org.apache.commons.csv.QuoteMode',
+      'org.apache.kafka.clients.producer.Producer',
+      'org.apache.kafka.clients.producer.RecordMetadata',
+      'org.codehaus.stax2.XMLStreamWriter2',
+      'org.jctools.queues.MpscArrayQueue',
+      'org.osgi.framework.Bundle',
+      'org.osgi.framework.BundleActivator',
+      'org.osgi.framework.BundleContext',
+      'org.osgi.framework.BundleEvent',
+      'org.osgi.framework.BundleReference',
+      'org.osgi.framework.FrameworkUtil',
+      'org.osgi.framework.ServiceRegistration',
+      'org.osgi.framework.SynchronousBundleListener',
+      'org.osgi.framework.wiring.BundleWire',
+      'org.osgi.framework.wiring.BundleWiring',
+      'org.zeromq.ZMQ$Context',
+      'org.zeromq.ZMQ$Socket',
+      'org.zeromq.ZMQ',
+
+      // from org.locationtech.spatial4j.io.GeoJSONReader (spatial4j)
+      'org.noggit.JSONParser',
+
+      // from lucene-spatial
+      'com.fasterxml.jackson.databind.JsonSerializer',
+      'com.fasterxml.jackson.databind.JsonDeserializer',
+      'com.fasterxml.jackson.databind.node.ArrayNode',
+      'com.google.common.geometry.S2Cell',
+      'com.google.common.geometry.S2CellId',
+      'com.google.common.geometry.S2Projections',
+      'com.google.common.geometry.S2Point',
+      'com.google.common.geometry.S2$Metric',
+      'com.google.common.geometry.S2LatLng'
+    ] + (BuildParams.runtimeJavaVersion < JavaVersion.VERSION_20) ? [] : [
+      'jdk.incubator.vector.ByteVector',
+      'jdk.incubator.vector.FloatVector',
+      'jdk.incubator.vector.IntVector',
+      'jdk.incubator.vector.ShortVector',
+      'jdk.incubator.vector.Vector',
+      'jdk.incubator.vector.VectorOperators',
+      'jdk.incubator.vector.VectorSpecies'
+    ]
+  )
+  ignoreViolations(
+    'com.google.protobuf.MessageSchema',
+    'com.google.protobuf.UnsafeUtil',
+    'com.google.protobuf.UnsafeUtil$1',
+    'com.google.protobuf.UnsafeUtil$Android32MemoryAccessor',
+    'com.google.protobuf.UnsafeUtil$Android64MemoryAccessor',
+    'com.google.protobuf.UnsafeUtil$JvmMemoryAccessor',
+    'com.google.protobuf.UnsafeUtil$MemoryAccessor',
+    'org.apache.logging.log4j.core.util.internal.UnsafeUtil',
+    'org.apache.logging.log4j.core.util.internal.UnsafeUtil$1'
+  )
+}
+
+tasks.named("dependencyLicenses").configure {
+  mapping from: /lucene-.*/, to: 'lucene'
+  dependencies = project.configurations.runtimeClasspath.fileCollection {
+    it.group.startsWith('org.opensearch') == false ||
+      // keep the following org.opensearch jars in
+      (it.name == 'jna' ||
+        it.name == 'securesm')
+  }
+}
+
+tasks.named("filepermissions").configure {
+  mustRunAfter("generateProto")
+}
+
+tasks.named("licenseHeaders").configure {
+  dependsOn("generateProto")
+  // Ignore our vendored version of Google Guice
+  excludes << 'org/opensearch/common/inject/**/*'
+  // Ignore temporary copies of impending 8.7 Lucene classes
+  excludes << 'org/apache/lucene/search/RegExp87*'
+  excludes << 'org/apache/lucene/search/RegexpQuery87*'
+  excludes << 'org/opensearch/client/documentation/placeholder.txt'
+  // Ignore for protobuf generated code
+  excludes << 'org/opensearch/extensions/proto/*'
+}
+
+tasks.test {
+  if (BuildParams.runtimeJavaVersion > JavaVersion.VERSION_1_8) {
+    jvmArgs += ["--add-opens", "java.base/java.nio.file=ALL-UNNAMED"]
+  }
+}
+
+tasks.named("sourcesJar").configure {
+  // Ignore duplicates for protobuf generated code (main and generatedSources).
+  filesMatching("**/proto/*") {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+  }
+}
