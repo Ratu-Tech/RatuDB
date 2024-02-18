@@ -19,7 +19,7 @@ Cassandra作为宽表存储，Opensearch 存储着Cassandra的索引，每次查
 
 * [下载] 并且 解压 RatuDB 安装包.
 * 运行 `bin/ratudb_server` 在 Linux 或者 macOS.
-* 运行 `curl -X GET http://localhost:9200/` 验证 Elasticsearch 是否运行.
+* 运行 `curl -X GET http://localhost:9200/` 验证 Opensearch 是否运行.
 * 目前项目没有集成 `cql` 客户端, 可以在随机找一个, 进入目录，运行 `./bin/cqlsh`，cql默认不填写`ip`地址的情况下，就是连接`127.0.0.1`，可以验证Cassandra是否运行。
 * 也可以使用`./bin/nodetool` 客户端工具，查看工具变化，RatuDB默认开放 7199 端口，用于查看集群状态。目前安装也未集成客户端工具。
 
