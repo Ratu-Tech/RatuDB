@@ -741,3 +741,12 @@ allprojects { project ->
     }
   }
 }
+
+gradle.projectsEvaluated {
+  // import ant tasks from cassandra
+  ant.importBuild('server/cassandra/build.xml') { antTargetName ->
+    'cassandra-' + antTargetName
+  }
+}
+
+tasks.getByName('clean').dependsOn('cassandra-realclean')
