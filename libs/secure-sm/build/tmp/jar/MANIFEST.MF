@@ -1,2 +1,20 @@
 Manifest-Version: 1.0
+Module-Origin: git@github.com:Ratu-Tech/RatuDB.git
+Change: 4656c006b0cfc3bf58caf1c4eeca584c017c1ab4
+X-Compile-OpenSearch-Version: 3.0.0-SNAPSHOT
+X-Compile-Lucene-Version: 9.8.0
+X-Compile-OpenSearch-Snapshot: true
+Implementation-Title: org.opensearch#opensearch-secure-sm;2.1.2
+Implementation-Version: 2.1.2
+Built-Status: integration
+Built-By: lei.fu
+Built-OS: Mac OS X
+Build-Timezone: Asia/Shanghai
+Build-Date-UTC: 2024-02-19T02:33:06.399057Z
+Build-Date: 2024-02-19T02:33:02.995506Z
+Gradle-Version: 8.4
+Created-By: 11.0.18+9-LTS-195 (Oracle Corporation)
+X-Compile-Target-JDK: 11
+X-Compile-Source-JDK: 11
+Build-Java-Version: 11
 

@@ -245,9 +245,5 @@ grant {
 
     permission org.opensearch.secure_sm.ThreadPermission "modifyArbitraryThreadGroup";
     permission java.lang.RuntimePermission "createClassLoader";
-    permission java.security.SecurityPermission "putProviderProperty.BC";
-    permission java.security.SecurityPermission "removeProviderProperty.BC";
-    permission java.security.SecurityPermission "insertProvider";
-    permission java.lang.RuntimePermission "accessUserInformation";
 
 };

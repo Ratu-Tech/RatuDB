@@ -15,7 +15,6 @@ rank-eval
 reindex
 repository-url
 search-pipeline-common
-security
 systemd
 transport-netty4
 spi
