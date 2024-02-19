@@ -71,6 +71,7 @@ apply from: 'gradle/run.gradle'
 apply from: 'gradle/missing-javadoc.gradle'
 apply from: 'gradle/code-coverage.gradle'
 
+
 // common maven publishing configuration
 allprojects {
   group = 'org.opensearch'
@@ -79,7 +80,7 @@ allprojects {
 
   repositories {
     maven {
-      url = 'https://gitee.com/xuanxuan1177/lei/raw/master'
+      url = 'https://gitee.com/ratu-tech/mvn/raw/master'
     }
     mavenCentral()
     google()

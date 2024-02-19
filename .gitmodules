@@ -1,0 +1,4 @@
+[submodule "server/cassandra"]
+	path = server/cassandra
+	url = ssh://git@gitlab.ratu.ltd:30022/operation-ratudb/ratu-cassandra.git
+	branch = opensearch-cassandra

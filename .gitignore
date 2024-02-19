@@ -4,10 +4,11 @@
 *.iml
 *.ipr
 *.iws
+.DS_Store
 build-idea/
 out/
-
 server/cassandra/
+buildSrc/.gradle/*
 
 # include shared intellij config
 !.idea/inspectionProfiles/Project_Default.xml
