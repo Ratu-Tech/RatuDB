@@ -2,13 +2,11 @@
 
 ## 这是什么?
 
-这个项目是在 Opensearch 3.0 进行的扩展。说白了，还是个 Opensearch，但是在 Opensearch 内部集成了Cassandra。
+RatuDB是中科睿途组装和研发的基于Cassandra，Opensearch，Janusgraph为基础构建可独立运营的无中心分布式数据库,以Cassandra作为数仓，可以快速写入，并可以存储数百TB的数据，而不牺牲读取效率；用OpenSearch做数据索引，可以更快速地提取、搜索、聚合、查看以及分析数据，用Janusgraph做数据关系，其对数据持久性、数据索引、客户端访问实现了强大的模块化接口，专注于紧凑图、丰富图数据建模、高效的查询执行；之后会web界面化，可以通过界面进行数据查询和图数据建模。
 
-Cassandra作为宽表存储，Opensearch 存储着Cassandra的索引，每次查询的时候，都会到 Opensearch 进行索引操作，优化提升Cassandra的查询性能。
+![](img/47.png)
 
-之后我们又在RatuDB里增加了Janusgraph。
-
-所以RatuDB在jvm进程里拥有了Opensearch、Cassandra和Janusgraph。当在使用的时候，还可以结合起来使用。
+项目在 Opensearch 3.0 进行的扩展。在 Opensearch 内部集成了Cassandra。 Cassandra作为宽表存储，Opensearch 存储着Cassandra的索引，每次查询的时候，都会到 Opensearch 进行索引操作，优化提升Cassandra的查询性能。 之后又在RatuDB里增加了Janusgraph。 综上，RatuDB在jvm进程里包含Opensearch、Cassandra和Janusgraph服务。可以结合起来使用。
 
 ## Getting Started
 
@@ -19,8 +17,6 @@ Cassandra作为宽表存储，Opensearch 存储着Cassandra的索引，每次查
 - 运行 `curl -X GET http://localhost:9200/` 验证 Opensearch 是否运行.
 - 目前项目没有集成 `cql` 客户端, 可以在随机找一个, 进入目录，运行 `./bin/cqlsh`，cql默认不填写`ip`地址的情况下，就是连接`127.0.0.1`，可以验证Cassandra是否运行。
 - 也可以使用`./bin/nodetool` 客户端工具，查看工具变化，RatuDB默认开放 7199 端口，用于查看集群状态。目前安装也未集成客户端工具。
-
-
 
 ## 构建源码
 
@@ -44,8 +40,6 @@ git clone https://github.com/Ratu-Tech/RatuDB.git
 git clone https://github.com/Ratu-Tech/RatuDB.git --recursive
 ```
 
-
-
 第一次拉取完成之后，cassandra 的源码作为子模块，也需要初始化，安装好ant 1.10以上版本 之后，可以进入源码 **server/cassandra** 目录，然后执行：
 
 ```
@@ -53,8 +47,6 @@ ant mvn-instal
 ```
 
 这样就会对所有的cassandra 需要的jar包进行初始化。 当然JDK11要提前安装好。
-
-
 
 之后，就可以执行一下运行：
 
@@ -129,8 +121,6 @@ RatuDB 使用JDK11,全局配置JDK11就可以了。
 - 选择 **File > Open**
 - 在随后的对话框中导航到根目录 `build.gradle` 文件
 - 在随后的对话框中选择 **Open as Project**
-
-
 
 ## 如何使用
 
@@ -377,32 +367,31 @@ SELECT * FROM lei.tweets WHERE expr(tweets_index, '{
 
 在创建索引的时候，可以参考这张表
 
-| CQL 类型  | 对应Java类型      | ES类型  | 描述                                                         |
-| :-------- | :---------------- | :------ | :----------------------------------------------------------- |
-| ascii     | String            | text    | asii字符串                                                   |
-| bigint    | long              | long    | 64位整数                                                     |
-| blob      | ByteBuffer/byte[] | text    | 二进制数组 存入ES后，继续解析回成字符串存储                  |
-| boolean   | Boolean           | boolean | 布尔                                                         |
-| decimal   | BigDecimal        | float   | 高精度小数                                                   |
-| double    | double            | double  | 64位浮点小数                                                 |
-| float     | float             | float   | 32位浮点数                                                   |
-| inet      | String            | ip      | ipv4或ipv6协议的ip地址(ipv6 暂时没测试)                      |
-| int       | int               | integer | 32位浮点数                                                   |
-| text      | String            | text    | utf-8编码的字符串                                            |
+
+| CQL 类型  | 对应Java类型      | ES类型  | 描述                                                                             |
+| :---------- | :------------------ | :-------- | :--------------------------------------------------------------------------------- |
+| ascii     | String            | text    | asii字符串                                                                       |
+| bigint    | long              | long    | 64位整数                                                                         |
+| blob      | ByteBuffer/byte[] | text    | 二进制数组 存入ES后，继续解析回成字符串存储                                      |
+| boolean   | Boolean           | boolean | 布尔                                                                             |
+| decimal   | BigDecimal        | float   | 高精度小数                                                                       |
+| double    | double            | double  | 64位浮点小数                                                                     |
+| float     | float             | float   | 32位浮点数                                                                       |
+| inet      | String            | ip      | ipv4或ipv6协议的ip地址(ipv6 暂时没测试)                                          |
+| int       | int               | integer | 32位浮点数                                                                       |
+| text      | String            | text    | utf-8编码的字符串                                                                |
 | timestamp | Date              | date    | 日期 Opensearch 支持的日期，yyyy-MM-dd 或者 yyyy-MM-ddTHH:MM:SSZ ,代码内自动转换 |
-| uuid      | UUID              | text    | UUID类型                                                     |
-| timeuuid  | UUID              | text    | 时间相关的UUID                                               |
-| varchar   | string            | text    | text的别名                                                   |
-| varint    | BigInteger        | text    | 高精度整型                                                   |
-| duration  | String            | text    | 以纳秒为单位的持续时间                                       |
-| smallint  | Integer           | integer | 16位浮点数                                                   |
-| tinyint   | Integer           | integer | 8位浮点数                                                    |
-| list<T>   | String            | text    | 存入到ES之后是array                                          |
-| time      | long              | long    | 纳秒级别的时间戳，格式 hh:mm:ss 的纳秒精准度，存入ES是64位整数 |
-| set<T>    | Set<T>            | text    | 存入到ES之后是array                                          |
-| map<T,T>  | Map<T,T>          | nested  | 复合结构，支持子查询                                         |
-
-
+| uuid      | UUID              | text    | UUID类型                                                                         |
+| timeuuid  | UUID              | text    | 时间相关的UUID                                                                   |
+| varchar   | string            | text    | text的别名                                                                       |
+| varint    | BigInteger        | text    | 高精度整型                                                                       |
+| duration  | String            | text    | 以纳秒为单位的持续时间                                                           |
+| smallint  | Integer           | integer | 16位浮点数                                                                       |
+| tinyint   | Integer           | integer | 8位浮点数                                                                        |
+| list<T>   | String            | text    | 存入到ES之后是array                                                              |
+| time      | long              | long    | 纳秒级别的时间戳，格式 hh:mm:ss 的纳秒精准度，存入ES是64位整数                   |
+| set<T>    | Set<T>            | text    | 存入到ES之后是array                                                              |
+| map<T,T>  | Map<T,T>          | nested  | 复合结构，支持子查询                                                             |
 
 ## janusgraph 配置
 
@@ -422,15 +411,15 @@ janusgraph 的配置文件，一共有gremlin-server-cql-opensearch.yaml、janus
 
 这是新建图时候服务存储的核心配置文件了，这里边有几个配置重点讲一下。 --- storage.backend=cql --- 这是janusgraph的存储指向配置，默认就cql，也就是存储在cassandra里边，平时不建议修改。当然如果希望RatuDB只是单纯作为一个gremlin的客户端使用，指向其他服务可以考虑调整。在下一个小版本中，我考虑想把这个配置拿掉，就是cql。
 
-------
+---
 
 storage.hostname=127.0.0.1 --- 这是存储的配置，默认启动是127.0.0.1。如果集群模式下，可以把集群内所有IP的地址填写上即可，用逗号分隔开，举例：storage.hostname=192.168.184.31，192.168.184.32，192.168.184.33
 
-------
+---
 
 storage.cql.keyspace=ratudb --- 这是图数据存储到Cassandra里边之后的keyspace名字，现在默认是ratudb，可以根据情况调整。
 
-------
+---
 
 storage.cql.local-datacenter=datacenter1 --- 这是数据中心名称配置，这个在不复杂的网络环境里，建议和cassandra一致即可。默认datacenter1也是cassandra的默认配置。
 
