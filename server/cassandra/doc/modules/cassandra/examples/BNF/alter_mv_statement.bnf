@@ -1,1 +1,0 @@
-alter_materialized_view_statement::= ALTER MATERIALIZED VIEW [ IF EXISTS ] view_name WITH table_options

@@ -1,2 +1,0 @@
-commitlog_compression:
-    - class_name: ZstdCompressor

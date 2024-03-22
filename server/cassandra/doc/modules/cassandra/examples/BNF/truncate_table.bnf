@@ -1,1 +1,0 @@
-truncate_statement::= TRUNCATE [ TABLE ] table_name

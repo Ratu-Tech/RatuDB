@@ -8,19 +8,29 @@
 
 ## Getting Started
 
+### Requirements
+
+* JDK 11
+* Python 3.8 ~ 3.11 (CQL客户端需要)
+
 ### Installation
 
 - [下载] 并且 解压 RatuDB 安装包.
 - 运行 `bin/ratudb_server` 在 Linux 或者 macOS.
 - 运行 `curl -X GET http://localhost:9200/` 验证 Opensearch 是否运行.
-- 目前项目没有集成 `cql` 客户端, 可以在随机找一个, 进入目录，运行 `./bin/cqlsh`，cql默认不填写`ip`地址的情况下，就是连接`127.0.0.1`，可以验证Cassandra是否运行。
-- 也可以使用`./bin/nodetool` 客户端工具，查看工具变化，RatuDB默认开放 7199 端口，用于查看集群状态。目前安装也未集成客户端工具。
+- 运行 `./bin/ratudb_client`，默认不填写`ip`地址的情况下，就是连接`127.0.0.1`，可以验证Cassandra是否运行。
+- 也可以使用`./bin/nodetool` 客户端工具，查看集群变化，RatuDB默认开放 7199 端口，用于查看集群状态。
+- 运行 `./bin/ratudb_client --graph` 就是连接到Janusgraph。
+
+
 
 ## 构建源码
 
 RatuDB 使用 [Gradle](https://gradle.org) 构建系统.
 
 Gradle 使用 `8.4` 版本，不建议升级 Gradle版本。
+
+同时也需要安装 ant 1.10 。
 
 完成的发行版将输出到 `distributions/archives` 目录.
 
@@ -38,6 +48,8 @@ git clone https://github.com/Ratu-Tech/RatuDB.git
 git clone https://github.com/Ratu-Tech/RatuDB.git --recursive
 ```
 
+
+
 第一次拉取完成之后，cassandra 的源码作为子模块，也需要初始化，安装好ant 1.10以上版本 之后，可以进入源码 **server/cassandra** 目录，然后执行：
 
 ```
@@ -45,6 +57,8 @@ ant mvn-instal
 ```
 
 这样就会对所有的cassandra 需要的jar包进行初始化。 当然JDK11要提前安装好。
+
+
 
 之后，就可以执行一下运行：
 
@@ -60,11 +74,10 @@ ant mvn-instal
 
 ```
 export RUNTIME_JAVA_HOME="JDK14路径"
-export CASSANDRA_USE_JDK11="jdk11路径"
 export JAVA_HOME="JDK11路径"
 ```
 
-RUNTIME_JAVA_HOME 是ES 的运行时JDK，CASSANDRA_USE_JDK11是Cassandra的运行时JDK。
+RUNTIME_JAVA_HOME 是ES 的运行时JDK。
 
 ##### 2. 构建
 
@@ -72,7 +85,7 @@ RUNTIME_JAVA_HOME 是ES 的运行时JDK，CASSANDRA_USE_JDK11是Cassandra的运�
 
 所以在架构项目之前，建议先执行，Cassandra的api包的构建任务，当然，如果没有修改Cassandra，也可以直接使用，源码自带了一个成品包。
 
-构建Cassandra的Api包：
+构建Cassandra的API的jar包：
 
 ```
 ./gradlew cassandra-mvn-install
@@ -120,7 +133,9 @@ RatuDB 使用JDK11,全局配置JDK11就可以了。
 - 在随后的对话框中导航到根目录 `build.gradle` 文件
 - 在随后的对话框中选择 **Open as Project**
 
-## 如何使用
+
+
+## 高级索引的使用
 
 ### 1.创建表
 
@@ -141,8 +156,6 @@ CREATE KEYSPACE lei
 WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 1};
 ```
 
-`replication_factor` * 这个参数设置过大也就会占用大量内存，测试过程中，三节点单核2G内存，写入20万的数量，replication_factor设置 为3的情况下就会出现内存溢出的情况，建议设置为1或者0。*
-
 然后再创建一张表:
 
 ```
@@ -158,7 +171,7 @@ CREATE TABLE lei.tweets (
 
 ### 2.创建索引
 
-从目前看，跟普通的Cassandra操作是没有什么区别的，接下来的创建的索引就不一样了，举例如下：
+接下来的创建的索引，举例如下：
 
 ```
 CREATE CUSTOM INDEX tweets_index ON lei.tweets ()
@@ -203,107 +216,9 @@ POST 索引名/_refresh
 
 以上都执行完成后，可以执行在Opensearch里看到索引已经创建了：
 
-### 3.创建索引补充内容
 
-最近测试发现一个问题，数据量频繁的情况，为了保证性能，异步写入的吞吐量确实高， 这是1万条数据，1G内存，未同步的情况的报告：
 
-```
-[OVERALL], RunTime(ms), 4167
-[OVERALL], Throughput(ops/sec), 2399.808015358771
-[TOTAL_GCS_G1_Young_Generation], Count, 4
-[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 16
-[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 0.3839692824574034
-[TOTAL_GCS_G1_Old_Generation], Count, 0
-[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
-[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
-[TOTAL_GCs], Count, 4
-[TOTAL_GC_TIME], Time(ms), 16
-[TOTAL_GC_TIME_%], Time(%), 0.3839692824574034
-[CLEANUP], Operations, 10
-[CLEANUP], AverageLatency(us), 222516.6
-[CLEANUP], MinLatency(us), 0
-[CLEANUP], MaxLatency(us), 2226175
-[CLEANUP], 95thPercentileLatency(us), 2226175
-[CLEANUP], 99thPercentileLatency(us), 2226175
-[INSERT], Operations, 10000
-[INSERT], AverageLatency(us), 1289.455
-[INSERT], MinLatency(us), 401
-[INSERT], MaxLatency(us), 47551
-[INSERT], 95thPercentileLatency(us), 3957
-[INSERT], 99thPercentileLatency(us), 5307
-[INSERT], Return=OK, 10000
-```
-
-同步的情况：
-
-```
-[OVERALL], RunTime(ms), 4375
-[OVERALL], Throughput(ops/sec), 2285.714285714286
-[TOTAL_GCS_G1_Young_Generation], Count, 4
-[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 15
-[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 0.34285714285714286
-[TOTAL_GCS_G1_Old_Generation], Count, 0
-[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
-[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
-[TOTAL_GCs], Count, 4
-[TOTAL_GC_TIME], Time(ms), 15
-[TOTAL_GC_TIME_%], Time(%), 0.34285714285714286
-[CLEANUP], Operations, 10
-[CLEANUP], AverageLatency(us), 223336.7
-[CLEANUP], MinLatency(us), 1
-[CLEANUP], MaxLatency(us), 2234367
-[CLEANUP], 95thPercentileLatency(us), 2234367
-[CLEANUP], 99thPercentileLatency(us), 2234367
-[INSERT], Operations, 10000
-[INSERT], AverageLatency(us), 1575.29
-[INSERT], MinLatency(us), 541
-[INSERT], MaxLatency(us), 56607
-[INSERT], 95thPercentileLatency(us), 3393
-[INSERT], 99thPercentileLatency(us), 7135
-[INSERT], Return=OK, 10000
-```
-
-基本上是差不多的性能了。
-
-- 但是高频写入大数据量的情况，会触发ES的断路器异常，主要原因是，异步写入，任务是写入到一个 Queue，但是 Queue 的长度如果超限，将会导致`[parent] Data too large` 的异常，这就是触发了父级的断路器，ES为了防止内存溢出，专门的设置。
-- 所以我在创建索引的时间了，增加了`async_write` 字段配置，默认是`false`，就是同步写入，同步写入可以保证稳定性。如果量不大，需要快速写入，并且频率也不高，可以设置为`true`，异步写入。
-
-创建索引例子：
-
-```
-CREATE CUSTOM INDEX usertable_index ON ycsb.usertable ()
-USING 'org.apache.ratu.second.ElasticSecondaryIndex'
-WITH OPTIONS = {
-   'refresh_seconds': '120',
-   'async_write': 'true',
-   'schema': '{
-      fields: {
-         field0: {type: "text"},
-         field1: {type: "text"},
-         field2: {type: "text"},
-         field3: {type: "text"},
-         field4: {type: "text"},
-         field5: {type: "text"},
-         field6: {type: "text"},
-         field7: {type: "text"},
-         field8: {type: "text"},
-         field9: {type: "text"}
-      }
-   }'
-};
-```
-
-如果是异步写入es，其实就是后台线程拉倒了es里边，es里边用一个queue存储，一个一个的进行处理。所以异步情况，要使用如下api观察是否写入成功:
-
-```
-GET _cat/thread_pool?v
-```
-
-如果queue里边的线程没有执行完毕，就执行其他操作，有可能出现异常。所以异步情况下建议还是要观察一下，es的写入情况。
-
-还有就是`refresh_seconds`参数，如果未设置的情况下，默认是`-1`，为了保证性能，就不刷新可见，但是同样Opensearch在内存不足的情况会出现断路器的异常`[parent] Data too large` Opensearch的内用第一是不会自动扩容，尤其是JVM 堆，一开始都是在`jvm-options`文件里设置好的，一旦不够用，为了避免服务出现异常，就会对占用内存过大的线程进行限制。所以建议横向扩展，对Opensearch分配足够多的内存。
-
-### 4.写入数据
+### 3.写入数据
 
 再写入几条数据试试,
 
@@ -315,7 +230,7 @@ INSERT INTO lei.tweets (id, user, body, time,latitude,longitude) VALUES (2, 'fu'
 INSERT INTO lei.tweets (id, user, body, time,latitude,longitude) VALUES (3, 'lei', '123456', '2019-05-15',41.12,-71.34);
 ```
 
-### 5.查询
+### 4.查询
 
 既然写入索引变化了，所以在Cassandra中查询数据，也需要一个新的表达式，才能进行二级索引的使用：
 
@@ -365,59 +280,50 @@ SELECT * FROM lei.tweets WHERE expr(tweets_index, '{
 
 在创建索引的时候，可以参考这张表
 
-
-| CQL 类型  | 对应Java类型      | ES类型  | 描述                                                                             |
-| :---------- | :------------------ | :-------- | :--------------------------------------------------------------------------------- |
-| ascii     | String            | text    | asii字符串                                                                       |
-| bigint    | long              | long    | 64位整数                                                                         |
-| blob      | ByteBuffer/byte[] | text    | 二进制数组 存入ES后，继续解析回成字符串存储                                      |
-| boolean   | Boolean           | boolean | 布尔                                                                             |
-| decimal   | BigDecimal        | float   | 高精度小数                                                                       |
-| double    | double            | double  | 64位浮点小数                                                                     |
-| float     | float             | float   | 32位浮点数                                                                       |
-| inet      | String            | ip      | ipv4或ipv6协议的ip地址(ipv6 暂时没测试)                                          |
-| int       | int               | integer | 32位浮点数                                                                       |
-| text      | String            | text    | utf-8编码的字符串                                                                |
+| CQL 类型  | 对应Java类型      | ES类型  | 描述                                                         |
+| :-------- | :---------------- | :------ | :----------------------------------------------------------- |
+| ascii     | String            | text    | asii字符串                                                   |
+| bigint    | long              | long    | 64位整数                                                     |
+| blob      | ByteBuffer/byte[] | text    | 二进制数组 存入ES后，继续解析回成字符串存储                  |
+| boolean   | Boolean           | boolean | 布尔                                                         |
+| decimal   | BigDecimal        | float   | 高精度小数                                                   |
+| double    | double            | double  | 64位浮点小数                                                 |
+| float     | float             | float   | 32位浮点数                                                   |
+| inet      | String            | ip      | ipv4或ipv6协议的ip地址(ipv6 暂时没测试)                      |
+| int       | int               | integer | 32位浮点数                                                   |
+| text      | String            | text    | utf-8编码的字符串                                            |
 | timestamp | Date              | date    | 日期 Opensearch 支持的日期，yyyy-MM-dd 或者 yyyy-MM-ddTHH:MM:SSZ ,代码内自动转换 |
-| uuid      | UUID              | text    | UUID类型                                                                         |
-| timeuuid  | UUID              | text    | 时间相关的UUID                                                                   |
-| varchar   | string            | text    | text的别名                                                                       |
-| varint    | BigInteger        | text    | 高精度整型                                                                       |
-| duration  | String            | text    | 以纳秒为单位的持续时间                                                           |
-| smallint  | Integer           | integer | 16位浮点数                                                                       |
-| tinyint   | Integer           | integer | 8位浮点数                                                                        |
-| list<T>   | String            | text    | 存入到ES之后是array                                                              |
-| time      | long              | long    | 纳秒级别的时间戳，格式 hh:mm:ss 的纳秒精准度，存入ES是64位整数                   |
-| set<T>    | Set<T>            | text    | 存入到ES之后是array                                                              |
-| map<T,T>  | Map<T,T>          | nested  | 复合结构，支持子查询                                                             |
+| uuid      | UUID              | text    | UUID类型                                                     |
+| timeuuid  | UUID              | text    | 时间相关的UUID                                               |
+| varchar   | string            | text    | text的别名                                                   |
+| varint    | BigInteger        | text    | 高精度整型                                                   |
+| duration  | String            | text    | 以纳秒为单位的持续时间                                       |
+| smallint  | Integer           | integer | 16位浮点数                                                   |
+| tinyint   | Integer           | integer | 8位浮点数                                                    |
+| list<T>   | String            | text    | 存入到ES之后是array                                          |
+| time      | long              | long    | 纳秒级别的时间戳，格式 hh:mm:ss 的纳秒精准度，存入ES是64位整数 |
+| set<T>    | Set<T>            | text    | 存入到ES之后是array                                          |
+| map<T,T>  | Map<T,T>          | nested  | 复合结构，支持子查询                                         |
+
+
 
 ## janusgraph 配置
 
 ### 1.修改配置文件。
 
-janusgraph 的配置文件，一共有gremlin-server-cql-opensearch.yaml、janusgraph-cql-opensearch.properties、janusgraph-inmemory.properties、janusgraph-log4j2-console.xml、janusgraph-log4j2-server.xml、remote.yaml，这几个文件。
+#### janusgraph-cql-opensearch.properties
 
-#### 1.janusgraph-inmemory.properties文件。
+这是新建图时候服务存储的核心配置文件了，这里边有几个配置重点讲一下。 
 
-这个文件最开始我认为是不需要的，但是RatuDB本身会同时启动Opensearch、Cassandra和janusgraph三个服务，而janusgraph会和另外两个服务建立连接，Opensearch还好，都是使用的RestAPI进行操作连接，而Cassandra的客户端，是开启socket连接。所以建立启动后，建立连接会很耗时。为了保证启动效率，所以保留了这个配置文件，在启动后，加载内存级别存储的janusgraph服务。
-
-#### 2.gremlin-server-cql-opensearch.yaml
-
-这是janusgraph的server配置文件，所有的配置都集中在这里。可以对照官网进行参数调整。需要注意 graphs 这个配置，这就是启动后新建一张图的配置，这里不建议修改，默认给的是上边内存加载新建的图。启动效率更高。
-
-#### 3.janusgraph-cql-opensearch.properties
-
-这是新建图时候服务存储的核心配置文件了，这里边有几个配置重点讲一下。 --- storage.backend=cql --- 这是janusgraph的存储指向配置，默认就cql，也就是存储在cassandra里边，平时不建议修改。当然如果希望RatuDB只是单纯作为一个gremlin的客户端使用，指向其他服务可以考虑调整。在下一个小版本中，我考虑想把这个配置拿掉，就是cql。
-
----
+------
 
 storage.hostname=127.0.0.1 --- 这是存储的配置，默认启动是127.0.0.1。如果集群模式下，可以把集群内所有IP的地址填写上即可，用逗号分隔开，举例：storage.hostname=192.168.184.31，192.168.184.32，192.168.184.33
 
----
+------
 
 storage.cql.keyspace=ratudb --- 这是图数据存储到Cassandra里边之后的keyspace名字，现在默认是ratudb，可以根据情况调整。
 
----
+------
 
 storage.cql.local-datacenter=datacenter1 --- 这是数据中心名称配置，这个在不复杂的网络环境里，建议和cassandra一致即可。默认datacenter1也是cassandra的默认配置。
 
@@ -433,17 +339,9 @@ index.[X].index-name=sanguosha
 
 重点说这个X，X位置默认是search，这时候，创建的索引名前缀是janusgraph。如果想修改掉，需要讲X修改为指定名字。并且三项要在同时的配置时候一致。再强调一遍，X位置的配置一定要一致。
 
-#### 4.remote.yaml
-
-这是远程集群连接的配置文件，目前看不调用也可以。暂时只是保留。
-
-#### 5.janusgraph-log4j2-console.xml 和 janusgraph-log4j2-server.xml
-
-这两个是日志配置文件。
-
 ### 2.客户端使用。
 
-ratudb_client 是新增的RatuDB的客户端工具。
+ratudb_client 是RatuDB的客户端工具。
 
 #### 1.连接janusgraph，执行下面命令：
 

@@ -1,1 +1,0 @@
-CREATE TABLE t (k text PRIMARY KEY);

@@ -1,1 +1,0 @@
-cql_type::= native_type| collection_type| user_defined_type | tuple_type | custom_type

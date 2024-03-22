@@ -1,3 +1,0 @@
-Requested creating snapshot(s) for ["CQLKeyspace".t,"CQLKeyspace".t2] with snapshot name [multi-
-table] and options {skipFlush=false}
-Snapshot directory: multi-table

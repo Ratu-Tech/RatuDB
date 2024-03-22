@@ -1,1 +1,0 @@
-grant_role_statement ::= GRANT role_name TO role_name

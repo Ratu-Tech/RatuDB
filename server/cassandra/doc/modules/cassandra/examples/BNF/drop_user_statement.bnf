@@ -1,1 +1,0 @@
-drop_user_statement ::= DROP USER [ IF EXISTS ] role_name

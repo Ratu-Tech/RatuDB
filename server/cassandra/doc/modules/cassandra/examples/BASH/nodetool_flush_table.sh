@@ -1,1 +1,0 @@
-$ nodetool flush cqlkeyspace t

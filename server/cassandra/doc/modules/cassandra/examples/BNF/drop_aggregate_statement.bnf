@@ -1,2 +1,0 @@
-drop_aggregate_statement::= DROP AGGREGATE [ IF EXISTS ] function_name[ '(' arguments_signature ')'
-]

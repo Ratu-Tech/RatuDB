@@ -1,3 +1,0 @@
-Requested creating snapshot(s) for [catalogkeyspace.journal,cqlkeyspace.t] with snapshot
-name [multi-ks] and options {skipFlush=false}
-Snapshot directory: multi-ks
