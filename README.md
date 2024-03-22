@@ -1,12 +1,10 @@
 # RatuDB
 
-## 这是什么?
-
-RatuDB是中科睿途组装和研发的基于Cassandra，Opensearch，Janusgraph为基础构建可独立运营的无中心分布式数据库,以Cassandra作为数仓，可以快速写入，并可以存储数百TB的数据，而不牺牲读取效率；用OpenSearch做数据索引，可以更快速地提取、搜索、聚合、查看以及分析数据，用Janusgraph做数据关系，其对数据持久性、数据索引、客户端访问实现了强大的模块化接口，专注于紧凑图、丰富图数据建模、高效的查询执行；之后会web界面化，可以通过界面进行数据查询和图数据建模。
+​	RatuDB是中科睿途以OpenSearch为基础，内置了Cassandra和Janusgraph，可独立运营的无中心分布式分析数据库。以Lucene作为统一存储底层，Cassandra作为数仓单元，可以快速写入，并可以存储数百TB的数据，而不牺牲读取效率；OpenSearch作为数据索引单元，可以更快速地提取、搜索、聚合、查看以及分析数据，JanusGraph作为图关系存储单元，其对数据持久性、数据索引、客户端访问实现了强大的模块化接口，专注于紧凑图、丰富图数据建模、高效的查询执行，能够提供关系型数据、索引型数据、图数据以及向量型数据一体化存储。
 
 ![](img/47.png)
 
-项目在 Opensearch 3.0 进行的扩展。在 Opensearch 内部集成了Cassandra。 Cassandra作为宽表存储，Opensearch 存储着Cassandra的索引，每次查询的时候，都会到 Opensearch 进行索引操作，优化提升Cassandra的查询性能。 之后又在RatuDB里增加了Janusgraph。 综上，RatuDB在jvm进程里包含Opensearch、Cassandra和Janusgraph服务。可以结合起来使用。
+
 
 ## Getting Started
 
